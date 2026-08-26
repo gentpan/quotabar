@@ -77,6 +77,15 @@ decodes a legacy `credentials` key purely to drain it into the keychain and
 never encodes it back. Automatic providers (Codex, Claude, Gemini) read the
 session the user's CLI already created — never prompt for a password.
 
+### Config decoding is per-field lenient
+
+`decodeIfPresent` tolerates a *missing* key but throws on an unrecognised
+value, which fails the whole file and silently resets every other preference.
+Enum fields therefore go through `decodeEnum`, and `enabled` through
+`decodeProviders`, which drops ids this build does not know rather than
+discarding the list. This matters on downgrade: a newer build writes a style
+or a provider an older one cannot parse. Covered by `ConfigResilienceTests`.
+
 ### Dictionaries keyed by an enum do not encode as objects
 
 `Codable` flattens `[ProviderID: T]` into an array (`["codex", value, ...]`),
@@ -143,6 +152,15 @@ dark window, so dark mode gets a light block with dark ink. It is neutral on
 purpose — the panel already carries eleven provider brand colours and a twelfth
 competing hue makes none of them legible. `QuotaBar --theme-preview <dir>`
 renders the panel across candidate accents if it ever needs revisiting.
+
+Nine menu-bar glyphs live in `MenuBarIcon`. Three of them are *stepped*
+(`grid` 9, `segments` 5, `columns` 4) and declare it via `MenuBarStyle.steps`:
+their gradations are countable, so the reading is exact rather than estimated
+off a continuous fill. `grid` is the default for that reason. A stepped glyph
+lights a cell only once its step is fully reached — except that any non-zero
+value lights the first cell, or 1% and 0% look identical. `QuotaBar
+--icon-preview <dir>` renders every style across nine levels plus the Settings
+picker, in both appearances.
 
 The panel does not scroll. Only the notch island does, because it lives in a
 fixed-size floating `NSPanel`; a clipped menu-bar panel hides the numbers the
