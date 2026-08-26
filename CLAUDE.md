@@ -179,6 +179,28 @@ Snapshots render light **and** dark (`-dark` suffix). Dark mode needs
 against the drawing appearance, which `ImageRenderer` does not inherit from the
 SwiftUI environment.
 
+### Credential sources
+
+Six ways a provider gets its credential, in order of preference:
+
+1. **CLI login file** — Codex (`~/.codex/auth.json`), Gemini, Grok, OpenCode Go
+   (`~/.local/share/opencode/auth.json`), read in the clear.
+2. **Another app's keychain item** — Claude Code.
+3. **Another app's local session store** — Cursor keeps its signed-in session
+   in `state.vscdb`, a plain SQLite file (`SQLiteRead`). Not the cookie jar,
+   which only holds the in-app browser's third-party cookies. The cookie
+   cursor.com wants is `sub::JWT`, not the bare token — `sub` is a claim inside
+   the JWT, and the composite is percent-encoded into the cookie.
+4. **Manual paste** — the fallback for everything, stored in the keychain.
+
+An automatic reader is always tried *after* a manually pasted credential, so a
+user can override a stale local session. A provider that has both an automatic
+reader and a manual fallback keeps its `credentialHint` non-nil.
+
+There is no OAuth-in-app path: of the eleven providers only Google (Gemini)
+permits third-party client registration, and it is already covered by the CLI
+login file. Do not embed another CLI's `client_id`, and never a `client_secret`.
+
 ## Adding a provider
 
 1. Implement `QuotaProvider` in `QuotaCore/Providers/`, with a pure `parse`.
