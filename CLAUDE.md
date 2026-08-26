@@ -137,6 +137,22 @@ Spacing, radii and surfaces come from `Design` in `DesignTokens.swift`. Radius
 tiers are deliberate (tile / card / panel); do not flatten them. Cards use a
 fill **or** a border, never both, and no gradients or glassmorphism.
 
+The accent is a neutral graphite **and inverts between appearances**
+(`QuotaTheme.accentHex` / `accentDarkHex`): a dark selection block sinks into a
+dark window, so dark mode gets a light block with dark ink. It is neutral on
+purpose — the panel already carries eleven provider brand colours and a twelfth
+competing hue makes none of them legible. `QuotaBar --theme-preview <dir>`
+renders the panel across candidate accents if it ever needs revisiting.
+
+The panel does not scroll. Only the notch island does, because it lives in a
+fixed-size floating `NSPanel`; a clipped menu-bar panel hides the numbers the
+app exists to show.
+
+Snapshots render light **and** dark (`-dark` suffix). Dark mode needs
+`NSAppearance.performAsCurrentDrawingAppearance` — adaptive colours resolve
+against the drawing appearance, which `ImageRenderer` does not inherit from the
+SwiftUI environment.
+
 ## Adding a provider
 
 1. Implement `QuotaProvider` in `QuotaCore/Providers/`, with a pure `parse`.
