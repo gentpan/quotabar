@@ -108,6 +108,23 @@ one. When touching the price table, re-check the numbers against the
 `claude-api` skill rather than memory, and keep the most specific marker first
 (`sonnet-5` before `sonnet`).
 
+**The scan is over tens of gigabytes.** A real Codex tree measured 30GB across
+112 files, next to 1GB of Claude logs — and the rows that matter are 0.2% of
+those bytes. The hot path therefore never builds a `String` per line: it scans
+raw bytes with `memchr`/`memmem` and only materialises `Data` for lines that
+match. Codex records are matched on the first 8KB only (its `type` field sits
+near the start); Claude's must be searched in full because `usage` comes after
+the message content. Files are parsed in parallel, largest first. Together these
+took a cold scan from 278s to 36s — do not undo them casually, and re-measure
+with `QuotaBar --cost` if you touch the scanner.
+
+`ChunkBoundaryTests` exists because every other fixture in the suite is a few
+hundred bytes and never crosses a read block. Keep it.
+
+Results are memoised in memory by (path, mtime, size), so steady-state refreshes
+are free — but the cost is paid again on every launch. A persistent cache is the
+remaining win if that matters.
+
 ### Staleness is never silent
 
 A failed refresh keeps the previous numbers as `.stale(snapshot, error:)`, which
