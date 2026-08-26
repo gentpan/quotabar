@@ -162,6 +162,14 @@ value lights the first cell, or 1% and 0% look identical. `QuotaBar
 --icon-preview <dir>` renders every style across nine levels plus the Settings
 picker, in both appearances.
 
+Opening Settings takes two steps, not one: `openSettings()` followed by
+`SettingsWindow.focus()`. The call alone does create the window, but an
+accessory app is never activated as a side effect, so it is ordered in behind
+whatever the user was looking at and the menu just closes with nothing visible.
+Activating *before* the window exists does nothing — hence the runloop hop.
+The legacy `showSettingsWindow:` selector does not work here at all; do not
+reach for it.
+
 The panel does not scroll. Only the notch island does, because it lives in a
 fixed-size floating `NSPanel`; a clipped menu-bar panel hides the numbers the
 app exists to show.
