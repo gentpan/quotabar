@@ -121,10 +121,28 @@ wrong and are covered by tests:
 - **Do not double-charge cached input.** Codex reports `input_tokens` inclusive
   of `cached_input_tokens`.
 
+**Prices come from `PricingCatalog`, not the table in `Cost.swift`.** That
+table is the offline fallback only. It prefix-matches, which is actively wrong
+for models it has never seen: this developer's Codex usage is `gpt-5.6-sol`,
+which matched `gpt-5` at $1.25/$10 against a real $4/$20 and understated that
+provider threefold. The catalog matches exact ids (plus a date-stamp strip) and
+never prefix-matches. Tests that pin the fallback must inject an empty catalog,
+or they assert against whatever prices this machine happens to have fetched.
+
 Anthropic charges 1.25x input for a 5-minute cache write and 2x for a 1-hour
-one. When touching the price table, re-check the numbers against the
-`claude-api` skill rather than memory, and keep the most specific marker first
-(`sonnet-5` before `sonnet`).
+one; the catalog publishes only the 5-minute figure, so the long one is derived.
+When touching the fallback table, re-check numbers against the `claude-api`
+skill rather than memory, and keep the most specific marker first (`sonnet-5`
+before `sonnet`).
+
+### Pace
+
+`UsageWindow.pace()` needs no history: window length, reset time and the current
+figure are enough. Note that "will exhaust before reset" and "is ahead of pace"
+are the *same predicate* under linear extrapolation — the algebra reduces to
+`used > 100 * elapsed / length`. Both names are kept because one reads better,
+not because one is stricter; `WindowPaceTests` pins the equivalence so nobody
+later treats them as different signals.
 
 **The scan is over tens of gigabytes.** A real Codex tree measured 30GB across
 112 files, next to 1GB of Claude logs — and the rows that matter are 0.2% of
