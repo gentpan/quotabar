@@ -162,12 +162,33 @@ purpose — the panel already carries eleven provider brand colours and a twelft
 competing hue makes none of them legible. `QuotaBar --theme-preview <dir>`
 renders the panel across candidate accents if it ever needs revisiting.
 
-Nine menu-bar glyphs live in `MenuBarIcon`. Three of them are *stepped*
-(`grid` 9, `segments` 5, `columns` 4) and declare it via `MenuBarStyle.steps`:
-their gradations are countable, so the reading is exact rather than estimated
-off a continuous fill. `grid` is the default for that reason. A stepped glyph
+The glyph is driven by a `MeterReading`, not one number: quota windows split
+into a **short** horizon (under a day — 5-hour, rolling) and a **long** one (a
+day or more, plus billing cycles with no fixed length), each taking the highest
+reading across enabled providers. `dual` draws them as two stacked rows and is
+the default; every other style collapses them to `headline` (the higher of the
+two). Collapsing hides which limit is actually near — a real account here reads
+31% short against 100% long, and a single meter shows only the 100%.
+
+A plan may report just one horizon (a Codex Pro account has no 5-hour window),
+so `dual` falls back to a single centred row rather than drawing an empty one,
+which would read as "nothing left".
+
+Nine menu-bar glyphs live in `MenuBarIcon`. Four of them are *stepped*
+(`dual` 5, `segments` 5, `grid` 9, `columns` 4) and declare it via
+`MenuBarStyle.steps`: their gradations are countable, so the reading is exact
+rather than estimated off a continuous fill.
+
+Prefer linear gradations. A 3x3 `grid` is the most distinctive glyph but the
+least readable: proportion along one axis is preattentive, while a grid has to
+be counted in two dimensions. Ten segments were also tried and are worse than
+five — at 22pt each cell falls to ~2pt and a filled cell stops being
+distinguishable from an outlined one, so the finer gradations bought nothing. A stepped glyph
 lights a cell only once its step is fully reached — except that any non-zero
-value lights the first cell, or 1% and 0% look identical. `QuotaBar
+value lights the first cell, or 1% and 0% look identical. **Unlit cells are
+drawn as outlines, never as a faint fill**: alpha alone stops distinguishing
+them once the glyph is tinted for an alert, and an exhausted quota then looks
+identical to a full one. `QuotaBar
 --icon-preview <dir>` renders every style across nine levels plus the Settings
 picker, in both appearances.
 
