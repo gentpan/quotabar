@@ -167,6 +167,26 @@ A failed refresh keeps the previous numbers as `.stale(snapshot, error:)`, which
 renders a banner. Do not collapse it back into `.loaded` — that is how a user
 ends up trusting a figure from an expired session.
 
+### Updating
+
+`Updater` downloads a release, verifies it, and only then swaps the bundle.
+**Verification is the point of the feature.** An updater that installs what it
+downloaded is a remote-code-execution path, so a staged bundle is installed
+only when `codesign` reports our own `TeamIdentifier` *and* `spctl` accepts it
+(which covers notarization). This is stronger than a self-managed signing key —
+an attacker would need the Developer ID certificate, not just the download URL.
+`UpdateVerificationTests` builds a real unsigned bundle and asserts it is
+refused; do not weaken that test into a stub.
+
+Homebrew installs are detected via `/opt/homebrew/Caskroom/quotabar` and are
+never replaced in place — doing so desyncs brew's metadata and the next
+`brew upgrade` fights it. Those users are pointed at `brew upgrade` instead.
+
+The feed is configurable: `owner/repo` means GitHub's releases API, anything
+with a scheme is a JSON endpoint returning `{"version", "url", "notes"}`. A
+malformed stored value falls back to the default rather than silently becoming
+a feed that never resolves.
+
 ### Design tokens
 
 Spacing, radii and surfaces come from `Design` in `DesignTokens.swift`. Radius
