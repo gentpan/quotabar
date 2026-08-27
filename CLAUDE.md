@@ -93,6 +93,15 @@ not an object. This already bit `config.json` and `history.json`. Key persisted
 dictionaries by `String` and, if the file shipped before, keep a reader for the
 old flat-array form.
 
+### Window rows carry structure, not a sentence
+
+A `UsageWindow` reports `windowSeconds` and `scope` separately from its
+`title`. The UI renders the length as a badge ("5h", "7d") and the scope as the
+only caption, so an account-wide window gets no caption at all — repeating
+"whole account" on every row is filler. Providers that know the length must set
+`windowSeconds`; `title` stays as the full label for accessibility and for rows
+with no fixed length (balances, billing cycles).
+
 ### Provider parsing
 
 Split every provider into a networking `fetch` and a pure `static parse(_ data:)`,
