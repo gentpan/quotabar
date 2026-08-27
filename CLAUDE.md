@@ -162,6 +162,11 @@ purpose — the panel already carries eleven provider brand colours and a twelft
 competing hue makes none of them legible. `QuotaBar --theme-preview <dir>`
 renders the panel across candidate accents if it ever needs revisiting.
 
+The glyph reports whichever provider the panel is focused on — `selected` in
+the config, persisted, because it decides what the icon means and a choice that
+reset on every launch would change that silently. An unknown or since-disabled
+id falls back to the overview, which aggregates across everything enabled.
+
 The glyph is driven by a `MeterReading`, not one number: quota windows split
 into a **short** horizon (under a day — 5-hour, rolling) and a **long** one (a
 day or more, plus billing cycles with no fixed length), each taking the highest
