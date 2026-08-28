@@ -187,6 +187,26 @@ with a scheme is a JSON endpoint returning `{"version", "url", "notes"}`. A
 malformed stored value falls back to the default rather than silently becoming
 a feed that never resolves.
 
+### Alternate presentations
+
+Three surfaces beyond the menu bar, in `IslandWindow`, `EdgeDock` and
+`DesktopWidget`. `presentation` picks at most one of the notch island and the
+edge dock; the desktop widget is an independent toggle, since it sits alongside
+the menu bar rather than replacing it — hence `widgetRevision` as its own
+change signal.
+
+Two rules these share. Floating panels that show information beside something
+else (the dock's hover callout) get their own panel with
+`ignoresMouseEvents = true`: widening the host panel to contain them leaves a
+transparent region that swallows clicks meant for the window underneath.
+Positions are stored as fractions of `visibleFrame`, clamped on both read and
+write, so a resolution change or a hand-edited config cannot park a panel
+off-screen.
+
+The desktop widget defaults to desktop level — above the icons, below every
+window. Floating it over the user's work is a different and more intrusive
+thing, so it is opt-in.
+
 ### Design tokens
 
 Spacing, radii and surfaces come from `Design` in `DesignTokens.swift`. Radius
