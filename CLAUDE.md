@@ -242,11 +242,18 @@ lands either side of it and never in the middle. Both are how the above was
 found rather than guessed at.
 
 `DockSlide.decide` is the rule that fixed the interruption and is pinned by
-`DockSlideTests`:
-re-applying the frame already pending is a no-op, and a genuine content resize
-arriving mid-slide joins the slide instead of snapping. Compare against the
-*pending* frame, never `panel.frame` — mid-slide that reports an in-between
-value and never compares equal.
+`DockSlideTests`: re-applying the frame already pending is a no-op, a hover
+transition animates, and anything else snaps. Compare against the *pending*
+frame, never `panel.frame` — mid-slide that reports an in-between value and
+never compares equal.
+
+There is deliberately no mid-slide case. A slide is never re-aimed, because
+re-aiming four milliseconds in is a second animation rather than a correction;
+`setContentHeight` holds content-driven resizes until the slide finishes
+instead. The cost is that a provider toggled during the 240ms reveal leaves the
+strip its old height until the next one. Do not "fix" that by letting a resize
+join the slide — that policy and the hold contradict each other, and whichever
+runs first makes the other unreachable.
 
 Two more rules these share. Floating panels that show information beside
 something else (the dock's hover callout) get their own panel with
