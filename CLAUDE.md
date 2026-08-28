@@ -207,8 +207,26 @@ edge dock; the desktop widget is an independent toggle, since it sits alongside
 the menu bar rather than replacing it — hence `widgetRevision` as its own
 change signal.
 
-Two rules these share. Floating panels that show information beside something
-else (the dock's hover callout) get their own panel with
+Never resize one of these panels with `setFrame(_:display:animate:)`. It steps
+the resize on a **blocking** run-loop loop — measured at 341ms of stalled main
+thread for the dock's reveal, against 0.6ms for `animator().setFrame` inside an
+`NSAnimationContext` — and it relayouts the hosting view on every step, so the
+SwiftUI content cannot animate at all while it runs. The panel frame and the
+content it holds must also share one clock (`EdgeDockCoordinator.slide`), or
+the content swaps instantly and the frame catches up afterwards.
+
+Two sources drive the dock's frame: the hover transition, and a `GeometryReader`
+reporting the strip's measured height. The second used to land an un-animated
+`setFrame` one layout pass into the first, cutting the reveal off partway — the
+animation still completed, so it looked fine in a log and stuttered on screen.
+`DockSlide.decide` is the rule that fixed it and is pinned by `DockSlideTests`:
+re-applying the frame already pending is a no-op, and a genuine content resize
+arriving mid-slide joins the slide instead of snapping. Compare against the
+*pending* frame, never `panel.frame` — mid-slide that reports an in-between
+value and never compares equal.
+
+Two more rules these share. Floating panels that show information beside
+something else (the dock's hover callout) get their own panel with
 `ignoresMouseEvents = true`: widening the host panel to contain them leaves a
 transparent region that swallows clicks meant for the window underneath.
 Positions are stored as fractions of `visibleFrame`, clamped on both read and
