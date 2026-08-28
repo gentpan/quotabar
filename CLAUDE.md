@@ -50,14 +50,26 @@ app runs unsandboxed.
 
 Renders the panel off-screen to PNGs (both languages, four states) — the app is
 a menu-bar agent, so there is no window to screenshot. CI runs this as a smoke
-test. Three `ImageRenderer` limitations to read past; none of them reflect the
+test. Two `ImageRenderer` limitations to read past; neither reflects the
 running app:
 
 - `ScrollView` contents are not laid out — panels render with `scrollable: false`.
-- AppKit-backed controls (`.borderless` buttons, `ProgressView`) come out as
-  yellow placeholder glyphs.
-- `SettingsView` is excluded: it assigns `@State` from `onAppear`, which the
-  renderer cannot service and traps on.
+- AppKit-backed controls (`.borderless` buttons, `ProgressView`, `Toggle`,
+  `SecureField`) come out as yellow placeholder glyphs.
+
+The settings window renders separately:
+
+```bash
+.build/debug/QuotaBar --settings-preview ./settings
+```
+
+One PNG per section, both languages, both appearances, plus one with a provider
+expanded. Every `@State` in `SettingsView` is seeded from `init` rather than
+`onAppear` precisely so this works — `ImageRenderer` runs outside a SwiftUI
+update transaction and traps on a change queued from `onAppear`. Glass and
+vibrancy are composited by AppKit and do not survive the renderer, so the
+preview substitutes flat fills of the same metrics: read it for spacing,
+alignment and truncation, and judge the material on screen.
 
 ## Rules
 
@@ -272,6 +284,39 @@ Snapshots render light **and** dark (`-dark` suffix). Dark mode needs
 against the drawing appearance, which `ImageRenderer` does not inherit from the
 SwiftUI environment.
 
+### The settings window
+
+It is the one surface that opts into Liquid Glass, and the only place the
+project's "a fill *or* a border, never both" rule is broken — a glass edge is
+what separates a translucent card from the translucent thing behind it.
+
+Scope is deliberate. The menu panel, the edge dock, the notch island and the
+desktop widget stay on the flat `Design` surfaces: they sit over arbitrary
+wallpaper and have to carry their own contrast, so glass there would put the
+user's desktop behind the numbers the app exists to show. A settings window is
+always in front of its own backdrop, so it can afford it.
+
+`glassEffect` is macOS 26; the deployment target is macOS 14. Every call site
+goes through `glassSurface` / `glassGroup` / `glassAction` in `GlassStyle.swift`
+rather than scattering `if #available` through the layout — below 26 they fall
+back to a frosted material with the same metrics, so nothing shifts.
+
+Navigation is a sidebar, not a tab bar. Two tabs meant eleven preferences that
+were not providers shared one scrolling `Form` in a 560pt window, and nothing
+was findable.
+
+Providers are an accordion, one open at a time. That is not only about the
+length of the list: the expanded row is what constructs `CredentialEditor`, and
+building it *is* the keychain read. Opening the window costs zero lookups
+instead of eleven, and the read that does happen is the direct result of a
+click. Do not hoist that read back up into the list.
+
+Controls come from `SettingRow` (fixed `Design.labelColumn`), `SettingToggle`
+(switch at the far right, as macOS does it) and `GlassSegmented`. The segmented
+control is ours rather than `.pickerStyle(.segmented)` because AppKit paints its
+selection in the *system* accent, which fights the eleven provider brand colours
+the rest of the app is careful to stay out of the way of.
+
 ### Credential sources
 
 Six ways a provider gets its credential, in order of preference:
@@ -298,7 +343,11 @@ login file. Do not embed another CLI's `client_id`, and never a `client_secret`.
 
 1. Implement `QuotaProvider` in `QuotaCore/Providers/`, with a pure `parse`.
 2. Add the `ProviderID` case: display name, SF Symbol, accent hex, dashboard
-   URL, `credentialHint` (nil for automatic providers), `setupHint`.
+   URL, `credentialHint` (nil for automatic providers), `setupHint`. The symbol
+   is asserted to resolve *and* to be locale-stable: an invented name renders as
+   nothing (`braces` shipped for OpenCode Go; it is `curlybraces`), and SF
+   Symbols localises a few marks — `textformat` draws the word "格式" in
+   Chinese, which shipped as Kimi's fallback.
 3. Register it in `ProviderRegistry.make`.
 4. Drop a logo PNG at `Sources/QuotaBar/Resources/logos/<rawValue>.png` and keep
    the SVG master in `Assets/`.
