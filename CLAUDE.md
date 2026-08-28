@@ -219,7 +219,30 @@ Two sources drive the dock's frame: the hover transition, and a `GeometryReader`
 reporting the strip's measured height. The second used to land an un-animated
 `setFrame` one layout pass into the first, cutting the reveal off partway — the
 animation still completed, so it looked fine in a log and stuttered on screen.
-`DockSlide.decide` is the rule that fixed it and is pinned by `DockSlideTests`:
+The strip's height is *computed*, not measured — `n` rings, their gaps and the
+padding. Measuring it meant the reveal began before the measurement existed, so
+it animated toward a placeholder 200pt and was re-aimed to 332pt four
+milliseconds later: two animations, to different y as well as different heights,
+and the panel visibly changed course. `setContentHeight` now only corrects the
+figure for next time and never re-aims mid-slide.
+
+Two more things the reveal needs, both of which look like the animation fighting
+itself when they are missing. The content is `.fixedSize()` and pinned to the
+docked edge, so the panel growing around it *reveals* it rather than laying it
+out again on every frame — otherwise the four rings are squeezed into the
+handle's 92pt at the start and relax over the next 240ms. And the black is one
+shape owned by the container, not one per state: cross-fading a small black
+capsule through a large black panel reads as two shapes arguing over the same
+corner. The radius is clamped to the shape it is drawn in, so a single 20pt
+value is the panel's corner at 74pt wide and the handle's pill edge at 18.
+
+`QUOTABAR_DOCK_TRACE=1` logs every frame request and decision;
+`QUOTABAR_DOCK_SLIDE=2` stretches the reveal, because at 0.24s a screen capture
+lands either side of it and never in the middle. Both are how the above was
+found rather than guessed at.
+
+`DockSlide.decide` is the rule that fixed the interruption and is pinned by
+`DockSlideTests`:
 re-applying the frame already pending is a no-op, and a genuine content resize
 arriving mid-slide joins the slide instead of snapping. Compare against the
 *pending* frame, never `panel.frame` — mid-slide that reports an in-between
