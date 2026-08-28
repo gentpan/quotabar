@@ -326,6 +326,22 @@ Navigation is a sidebar, not a tab bar. Two tabs meant eleven preferences that
 were not providers shared one scrolling `Form` in a 560pt window, and nothing
 was findable.
 
+The sidebar is an always-dark surface, so its colours are pinned rather than
+adaptive — `Color.primary` and `Design.accent` resolve against the *system*
+appearance and both go black-on-black in light mode, the same trap as the
+provider logos.
+
+Selection is `SidebarRail`, not a filled block: a hairline rail with a lit
+segment that travels to the selected row. Three layers make it read as light
+rather than as a painted tick — the rail and the segment both faded out at
+their ends, a blurred bloom, and a horizontal bleed feathered on all four
+sides. Drop any one and the effect collapses into a rectangle. The rail is
+drawn once for the whole list and sits *behind* the rows so the bleed falls
+under the label; it cannot belong to a row, since travelling between them is
+its whole job. The travel is a spring with visible overshoot, because the
+original is `cubic-bezier(0.37, 1.95, 0.66, 0.56)` and the 1.95 *is* the
+overshoot — a timing curve would only approximate it.
+
 Providers are an accordion, one open at a time. That is not only about the
 length of the list: the expanded row is what constructs `CredentialEditor`, and
 building it *is* the keychain read. Opening the window costs zero lookups
