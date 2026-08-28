@@ -256,6 +256,15 @@ Positions are stored as fractions of `visibleFrame`, clamped on both read and
 write, so a resolution change or a hand-edited config cannot park a panel
 off-screen.
 
+In the dock, a **single click picks** which provider the menu-bar glyph reports
+and a **double click opens** the panel. A single click used to do both, so
+choosing what the icon means also threw a window at you. The pick needs to be
+visible, hence `ProviderRing.selected` — drawn with negative padding so the
+marker is larger than the cell without changing its size, since the dock
+computes its own height from `cellHeight` and a taller cell desyncs the panel.
+The two-tap gesture must be attached *before* the one-tap: SwiftUI resolves the
+higher count first only in that order.
+
 The desktop widget defaults to desktop level — above the icons, below every
 window. Floating it over the user's work is a different and more intrusive
 thing, so it is opt-in.
