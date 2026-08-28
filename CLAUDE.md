@@ -279,6 +279,27 @@ The panel does not scroll. Only the notch island does, because it lives in a
 fixed-size floating `NSPanel`; a clipped menu-bar panel hides the numbers the
 app exists to show.
 
+Collapsed, the island is a **notch strip** on a notched Mac: the figures sit in
+the dead space either side of the notch rather than in a pill beside it. The two
+sides are mirrored — figure on the outer edge, mark against the notch — so the
+pair reads outward from the middle. Only two providers fit, which is the notch's
+constraint and not a choice: the strip has to clear the app's own menus on one
+side and the status items on the other, hence the 132pt `sideWidth`. On a screen
+with no notch (`safeAreaInsets.top == 0`, most external displays) it falls back
+to the old centred pill — a strip built around a zero-width notch is just a bar
+sitting on top of the menu bar's own items.
+
+The strip shows a reset countdown next to each figure, via `QuotaFormat.tick`
+rather than `countdown`: the latter returns a localised phrase ("5 天 17 小时")
+that does not fit in 60pt and truncates mid-number.
+
+The figure takes the provider's own `accentHex`, and that colour is **not**
+lifted for contrast at draw time. Every accent is instead required to clear
+4.5:1 against black, asserted in `ProviderRegistryTests` — an accent that has to
+be altered to be readable is the wrong accent, and mutating it at runtime would
+ship a colour nobody chose. (The near-black *logos* are a different problem, and
+the one `ProviderGlyph`'s `tint` solves.)
+
 Snapshots render light **and** dark (`-dark` suffix). Dark mode needs
 `NSAppearance.performAsCurrentDrawingAppearance` — adaptive colours resolve
 against the drawing appearance, which `ImageRenderer` does not inherit from the
