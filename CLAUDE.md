@@ -336,6 +336,24 @@ The panel does not scroll. Only the notch island does, because it lives in a
 fixed-size floating `NSPanel`; a clipped menu-bar panel hides the numbers the
 app exists to show.
 
+**`MenuBarExtra(.window)` measures its popover once and never again.** That once
+is the first render — before any provider has answered, when the detail section
+is sitting on its 210pt floor — so the window is 418pt from then on, for every
+provider, and reopening it does not re-measure. Real content runs 429pt to
+624pt, so the `VStack` was permanently over-committed and drew the footer on top
+of the last quota row. `MenuPanel.fit` pushes the measured height back into the
+panel, found by level (`.popUpMenu` is the popover's own; the dock, island and
+widget are `.statusBar`, Settings is `.normal`), anchored on the top edge
+because a popover hangs from the menu bar.
+
+Two things that look optional and are not. The content needs
+`.fixedSize(horizontal: false, vertical: true)`: without it a `VStack` too tall
+for its window overlaps its own children rather than overflowing, *and* the
+measurement is circular — the window constrains the content, the content
+reports the constrained height, and the resize is a no-op. And the request is
+clamped to `visibleFrame.height`, since a panel taller than the screen is worse
+than a short one.
+
 Collapsed, the island is a **notch strip** on a notched Mac: the figures sit in
 the dead space either side of the notch rather than in a pill beside it. The two
 sides are mirrored — figure on the outer edge, mark against the notch — so the
