@@ -276,6 +276,23 @@ The desktop widget defaults to desktop level — above the icons, below every
 window. Floating it over the user's work is a different and more intrusive
 thing, so it is opt-in.
 
+### The wordmark
+
+The word "QuotaBar" is set in Sora; everything else stays on the system face,
+which is what a macOS app should read as. The font ships inside the bundle —
+`Sources/QuotaBar/Resources/fonts`, copied by `package_app.sh`, declared by
+`ATSApplicationFontsPath` in Info.plist — because it is not a system font and
+assuming it is installed would mean the wordmark silently differs per machine.
+
+`Design.wordmark` is the only call site. `Font.custom` falls back to the system
+font on its own when the family is not registered, which is what the dev loop
+gets: a bare binary has no bundle to register a font from, so the snapshots
+render the fallback and that is correct rather than broken.
+
+Sora is SIL OFL 1.1, so `OFL.txt` ships beside it — the licence requires the
+font to travel with its text. The copyright line came out of the font's own
+name table rather than from memory.
+
 ### Design tokens
 
 Spacing, radii and surfaces come from `Design` in `DesignTokens.swift`. Radius
