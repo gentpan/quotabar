@@ -401,6 +401,19 @@ Navigation is a sidebar, not a tab bar. Two tabs meant eleven preferences that
 were not providers shared one scrolling `Form` in a 560pt window, and nothing
 was findable.
 
+The window is one surface: a black sidebar running the full height, and an
+opaque light-grey pane beside it. Two things are load-bearing there.
+
+`NSHostingView` honours the window's safe area, and a `fullSizeContentView`
+window's safe area *excludes* the titlebar — so the content began 28pt down and
+the window's own background showed through above it as a second bar across the
+top of the pane. `.ignoresSafeArea()` on the settings root is what fills it. The
+window's `backgroundColor` is also black, so if AppKit ever leaves a strip
+uncovered again it reads as sidebar rather than as a title bar.
+
+The pane is a flat fill, not an `NSVisualEffectView`. Vibrancy there bought a
+faint desktop tint under the glass and cost the seam above.
+
 The sidebar is an always-dark surface, so its colours are pinned rather than
 adaptive — `Color.primary` and `Design.accent` resolve against the *system*
 appearance and both go black-on-black in light mode, the same trap as the
